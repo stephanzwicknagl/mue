@@ -63,6 +63,10 @@ export default class TimeSettings extends PureComponent {
       {
         name: getMessage('modals.main.settings.sections.weather.temp_format.kelvin') + ' (K)',
         value: 'kelvin'
+      },
+      {
+        name: getMessage('modals.main.settings.sections.weather.temp_format.celsius-fahrenheit') + ' (°C) & (°F)',
+        value: 'celsius-fahrenheit'
       }
     ];
       

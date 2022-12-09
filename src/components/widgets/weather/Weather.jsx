@@ -87,30 +87,65 @@ export default class Weather extends PureComponent {
         temp_max = ((temp_max - 273.15) * 1.8) + 32;
         temp_text = '°F';
         break;
+      case 'celsius-fahrenheit':
+        let tempCelsius = Math.round(temp - 273.15);
+        let temp_min_Celsius = Math.round(temp_min - 273.15);
+        let temp_max_Celsius = Math.round(temp_max - 273.15);
+        let tempFahrenheit = Math.round(((temp - 273.15) * 1.8) + 32);
+        let temp_minFahrenheit = Math.round(((temp_min - 273.15) * 1.8) + 32);
+        let temp_maxFahrenheit = Math.round(((temp_max - 273.15) * 1.8) + 32);
+        temp = `${tempCelsius}°C, ${tempFahrenheit}°F`;
+        temp_text = '';
+        temp_min = `${temp_min_Celsius}°C, ${temp_minFahrenheit}°F`;
+        temp_max = `${temp_max_Celsius}°C, ${temp_maxFahrenheit}°F`;
+        break;
       // kelvin
       default: 
         break;
     }
 
-    this.setState({
-      icon: data.weather[0].icon,
-      temp_text,
-      weather: {
-        temp: Math.round(temp),
-        description: data.weather[0].description,
-        temp_min: Math.round(temp_min),
-        temp_max: Math.round(temp_max),
-        humidity: data.main.humidity,
-        wind_speed: data.wind.speed,
-        wind_degrees: data.wind.deg,
-        cloudiness: data.clouds.all,
-        visibility: data.visibility,
-        pressure: data.main.pressure,
-        original_temp: data.main.temp,
-        original_temp_min: data.main.temp_min,
-        original_temp_max: data.main.temp_max
-      }
-    });
+    if (localStorage.getItem('tempformat') !== 'celsius-fahrenheit') {
+      this.setState({
+        icon: data.weather[0].icon,
+        temp_text,
+        weather: {
+          temp: Math.round(temp),
+          description: data.weather[0].description,
+          temp_min: Math.round(temp_min),
+          temp_max: Math.round(temp_max),
+          humidity: data.main.humidity,
+          wind_speed: data.wind.speed,
+          wind_degrees: data.wind.deg,
+          cloudiness: data.clouds.all,
+          visibility: data.visibility,
+          pressure: data.main.pressure,
+          original_temp: data.main.temp,
+          original_temp_min: data.main.temp_min,
+          original_temp_max: data.main.temp_max
+        }
+      });
+    } else {
+      this.setState({
+        icon: data.weather[0].icon,
+        temp_text,
+        weather: {
+          temp: temp,
+          description: data.weather[0].description,
+          temp_min: temp_min,
+          temp_max: temp_max,
+          humidity: data.main.humidity,
+          wind_speed: data.wind.speed,
+          wind_degrees: data.wind.deg,
+          cloudiness: data.clouds.all,
+          visibility: data.visibility,
+          pressure: data.main.pressure,
+          original_temp: data.main.temp,
+          original_temp_min: data.main.temp_min,
+          original_temp_max: data.main.temp_max
+        }
+      });
+    }
+
 
     document.querySelector('.weather svg').style.fontSize = zoomWeather;
   }

@@ -425,6 +425,7 @@
               "celsius": "Celsius",
               "fahrenheit": "Fahrenheit",
               "kelvin": "Kelvin",
+              "celsius-fahrenheit": "Celsius & Fahrenheit",
               "title": "Temperatur Format"
             },
             "title": "Wetter"
