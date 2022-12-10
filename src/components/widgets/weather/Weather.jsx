@@ -186,7 +186,7 @@ export default class Weather extends PureComponent {
       } else if (maxtemp && !mintemp) {
         return <><br/>{this.state.weather.temp_max + this.state.temp_text}</>;
       } else {
-        return <><br/>{this.state.weather.temp_min + this.state.temp_text} {this.state.weather.temp_max + this.state.temp_text}</>;
+        return <><br />{this.state.weather.temp_min + this.state.temp_text} | {this.state.weather.temp_max + this.state.temp_text}</>;
       }
     };
 
