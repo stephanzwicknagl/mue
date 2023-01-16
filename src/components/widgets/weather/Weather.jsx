@@ -69,84 +69,54 @@ export default class Weather extends PureComponent {
       });
     }
 
-    let temp = data.main.temp;
-    let temp_min = data.main.temp_min; 
-    let temp_max = data.main.temp_max;
-    let temp_text = 'K';
+    let temp = [data.main.temp];
+    let temp_min = [data.main.temp_min]; 
+    let temp_max = [data.main.temp_max];
+    let temp_text = ['K'];
 
     switch (localStorage.getItem('tempformat')) {
       case 'celsius':
-        temp = temp - 273.15;
-        temp_min = temp_min - 273.15;
-        temp_max = temp_max - 273.15;
-        temp_text = '°C';
+        temp = [(temp[0] - 273.15)];
+        temp_min = [(temp_min[0] - 273.15)];
+        temp_max = [(temp_max[0] - 273.15)];
+        temp_text = ['°C'];
         break;
       case 'fahrenheit':
-        temp = ((temp - 273.15) * 1.8) + 32;
-        temp_min = ((temp_min - 273.15) * 1.8) + 32;
-        temp_max = ((temp_max - 273.15) * 1.8) + 32;
-        temp_text = '°F';
+        temp = [((temp[0] - 273.15) * 1.8) + 32];
+        temp_min = [((temp_min[0] - 273.15) * 1.8) + 32];
+        temp_max = [((temp_max[0] - 273.15) * 1.8) + 32];
+        temp_text = ['°F'];
         break;
       case 'celsius-fahrenheit':
-        let tempCelsius = Math.round(temp - 273.15);
-        let temp_min_Celsius = Math.round(temp_min - 273.15);
-        let temp_max_Celsius = Math.round(temp_max - 273.15);
-        let tempFahrenheit = Math.round(((temp - 273.15) * 1.8) + 32);
-        let temp_minFahrenheit = Math.round(((temp_min - 273.15) * 1.8) + 32);
-        let temp_maxFahrenheit = Math.round(((temp_max - 273.15) * 1.8) + 32);
-        temp = `${tempCelsius}°C, ${tempFahrenheit}°F`;
-        temp_text = '';
-        temp_min = `${temp_min_Celsius}°C, ${temp_minFahrenheit}°F`;
-        temp_max = `${temp_max_Celsius}°C, ${temp_maxFahrenheit}°F`;
+        temp = [temp[0]-273.15, ((temp[0] - 273.15) * 1.8) + 32];
+        temp_min = [temp_min[0] - 273.15, ((temp_min[0] - 273.15) * 1.8) + 32];
+        temp_max = [temp_max[0] - 273.15, ((temp_max[0] - 273.15) * 1.8) + 32];
+        temp_text = ['°C', '°F'];
         break;
       // kelvin
       default: 
         break;
     }
 
-    if (localStorage.getItem('tempformat') !== 'celsius-fahrenheit') {
-      this.setState({
-        icon: data.weather[0].icon,
-        temp_text,
-        weather: {
-          temp: Math.round(temp),
-          description: data.weather[0].description,
-          temp_min: Math.round(temp_min),
-          temp_max: Math.round(temp_max),
-          humidity: data.main.humidity,
-          wind_speed: data.wind.speed,
-          wind_degrees: data.wind.deg,
-          cloudiness: data.clouds.all,
-          visibility: data.visibility,
-          pressure: data.main.pressure,
-          original_temp: data.main.temp,
-          original_temp_min: data.main.temp_min,
-          original_temp_max: data.main.temp_max
-        }
-      });
-    } else {
-      this.setState({
-        icon: data.weather[0].icon,
-        temp_text,
-        weather: {
-          temp: temp,
-          description: data.weather[0].description,
-          temp_min: temp_min,
-          temp_max: temp_max,
-          humidity: data.main.humidity,
-          wind_speed: data.wind.speed,
-          wind_degrees: data.wind.deg,
-          cloudiness: data.clouds.all,
-          visibility: data.visibility,
-          pressure: data.main.pressure,
-          original_temp: data.main.temp,
-          original_temp_min: data.main.temp_min,
-          original_temp_max: data.main.temp_max
-        }
-      });
-    }
-
-
+    this.setState({
+      icon: data.weather[0].icon,
+      temp_text,
+      weather: {
+        temp: temp.map(e=>Math.round(e)),
+        description: data.weather[0].description,
+        temp_min: temp_min.map(e=>Math.round(e)),
+        temp_max: temp_max.map(e=>Math.round(e)),
+        humidity: data.main.humidity,
+        wind_speed: data.wind.speed,
+        wind_degrees: data.wind.deg,
+        cloudiness: data.clouds.all,
+        visibility: data.visibility,
+        pressure: data.main.pressure,
+        original_temp: data.main.temp,
+        original_temp_min: data.main.temp_min,
+        original_temp_max: data.main.temp_max
+      }
+    });
     document.querySelector('.weather svg').style.fontSize = zoomWeather;
   }
   
@@ -182,18 +152,33 @@ export default class Weather extends PureComponent {
       if (!mintemp && !maxtemp) {
         return null;
       } else if (mintemp && !maxtemp) {
-        return <><br/>{this.state.weather.temp_min + this.state.temp_text}</>;
+        return <><br />{!this.state.weather.temp_min.length ? 
+          null :
+          this.state.weather.temp_min.map((e, i) => e + this.state.temp_text[i]).join(" - ")}
+          </>;
       } else if (maxtemp && !mintemp) {
-        return <><br/>{this.state.weather.temp_max + this.state.temp_text}</>;
+        return <><br />{!this.state.weather.temp_max.length ?
+          null :
+          this.state.weather.temp_max.map((e, i) => e + this.state.temp_text[i]).join(" - ")}
+          </>;
       } else {
-        return <><br />{this.state.weather.temp_min + this.state.temp_text} | {this.state.weather.temp_max + this.state.temp_text}</>;
+        return <><br />{!this.state.weather.temp_min.length || !this.state.weather.temp_max.length ?
+          null :
+          [this.state.weather.temp_min.map((e, i) => e + this.state.temp_text[i]).join(" - "),
+            this.state.weather.temp_max.map((e, i) => e + this.state.temp_text[i]).join(" - ")]
+          .join(" | ")}
+          </>;
       }
     };
 
     return (
       <div className='weather'>
         <WeatherIcon name={this.state.icon}/>
-        <span>{this.state.weather.temp + this.state.temp_text}</span>
+        <span>{!this.state.weather.temp.length ? 
+          null : 
+          this.state.weather.temp.map((e, i) => e + this.state.temp_text[i])
+          .join(" | ")}
+          </span>
         {enabled('weatherdescription') ? <span className='loc'><br/>{this.state.weather.description}</span> : null}
         <span className='minmax'>{minmax()}</span>
         {enabled('humidity') ? <span className='loc'><br/><WiHumidity/>{this.state.weather.humidity}%</span> : null}
