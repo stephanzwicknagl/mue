@@ -210,7 +210,7 @@
               "celsius": "Celsius",
               "fahrenheit": "Fahrenheit",
               "kelvin": "Kelvin",
-              "celsius-fahrenheit": "Celsius & Fahrenheit",
+              "celsius-fahrenheit": "Celsius & Fahrenheit"
             },
             "extra_info": {
               "title": "Extra information",
