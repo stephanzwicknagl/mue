@@ -209,8 +209,7 @@
               "title": "Temperature format",
               "celsius": "Celsius",
               "fahrenheit": "Fahrenheit",
-              "kelvin": "Kelvin",
-              "celsius-fahrenheit": "Celsius & Fahrenheit"
+              "kelvin": "Kelvin"
             },
             "extra_info": {
               "title": "Extra information",
