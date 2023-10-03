@@ -1,7 +1,7 @@
 import variables from 'modules/variables';
 import { PureComponent, createRef } from 'react';
 
-import { nth, convertTimezone } from 'modules/helpers/date';
+import { nth, convertTimezone } from '../../../modules/helpers/date';
 import EventBus from 'modules/helpers/eventbus';
 
 import './date.scss';
@@ -11,11 +11,15 @@ export default class DateWidget extends PureComponent {
     super();
     this.state = {
       date: '',
-      weekNumber: null
+      weekNumber: null,
     };
     this.date = createRef();
   }
 
+  /**
+   * Get the week number of the year for the given date.
+   * @param {Date} date
+   */
   getWeekNumber(date) {
     const dateToday = new Date(date.valueOf());
     const dayNumber = (dateToday.getDay() + 6) % 7;
@@ -25,11 +29,13 @@ export default class DateWidget extends PureComponent {
     dateToday.setMonth(0, 1);
 
     if (dateToday.getDay() !== 4) {
-      dateToday.setMonth(0, 1 + ((4 - dateToday.getDay()) + 7) % 7);
+      dateToday.setMonth(0, 1 + ((4 - dateToday.getDay() + 7) % 7));
     }
 
     this.setState({
-      weekNumber: `${variables.language.getMessage(variables.languagecode, 'widgets.date.week')} ${1 + Math.ceil((firstThursday - dateToday) / 604800000)}`
+      weekNumber: `${variables.getMessage('widgets.date.week')} ${
+        1 + Math.ceil((firstThursday - dateToday) / 604800000)
+      }`,
     });
   }
 
@@ -44,7 +50,7 @@ export default class DateWidget extends PureComponent {
       this.getWeekNumber(date);
     } else if (this.state.weekNumber !== null) {
       this.setState({
-        weekNumber: null
+        weekNumber: null,
       });
     }
 
@@ -53,7 +59,7 @@ export default class DateWidget extends PureComponent {
       const dateMonth = date.getMonth() + 1;
       const dateYear = date.getFullYear();
 
-      const zero = (localStorage.getItem('datezero') === 'true');
+      const zero = localStorage.getItem('datezero') === 'true';
 
       let day = zero ? ('00' + dateDay).slice(-2) : dateDay;
       let month = zero ? ('00' + dateMonth).slice(-2) : dateMonth;
@@ -69,7 +75,7 @@ export default class DateWidget extends PureComponent {
           year = dateDay;
           break;
         // DMY
-        default: 
+        default:
           break;
       }
 
@@ -87,24 +93,46 @@ export default class DateWidget extends PureComponent {
         case 'slashes':
           format = `${day}/${month}/${year}`;
           break;
-        default: 
+        default:
           break;
       }
 
       this.setState({
-        date: format
+        date: format,
       });
     } else {
       // Long date
       const lang = variables.languagecode.split('_')[0];
 
-      const datenth = (localStorage.getItem('datenth') === 'true') ? nth(date.getDate()) : date.getDate();
+      const datenth =
+        localStorage.getItem('datenth') === 'true' ? nth(date.getDate()) : date.getDate();
 
-      const day = (localStorage.getItem('dayofweek') === 'true') ? date.toLocaleDateString(lang, { weekday: 'long' }) : '';
-      const month = date.toLocaleDateString(lang, { month: 'long' });
+      const dateDay =
+        localStorage.getItem('dayofweek') === 'true'
+          ? date.toLocaleDateString(lang, { weekday: 'long' })
+          : '';
+      const dateMonth = date.toLocaleDateString(lang, { month: 'long' });
+      const dateYear = date.getFullYear();
+
+      let day = dateDay + ' ' + datenth;
+      let month = dateMonth;
+      let year = dateYear;
+      switch (localStorage.getItem('longFormat')) {
+        case 'MDY':
+          day = dateMonth;
+          month = dateDay + ' ' + datenth;
+          break;
+        case 'YMD':
+          day = dateYear;
+          year = dateDay + ' ' + datenth;
+          break;
+        // DMY
+        default:
+          break;
+      }
 
       this.setState({
-        date: `${day} ${datenth} ${month} ${date.getFullYear()}`
+        date: `${day} ${month} ${year}`,
       });
     }
   }
@@ -113,16 +141,20 @@ export default class DateWidget extends PureComponent {
     EventBus.on('refresh', (data) => {
       if (data === 'date' || data === 'timezone') {
         if (localStorage.getItem('date') === 'false') {
-          return this.date.current.style.display = 'none';
+          return (this.date.current.style.display = 'none');
         }
 
         this.date.current.style.display = 'block';
-        this.date.current.style.fontSize = `${Number((localStorage.getItem('zoomDate') || 100) / 100)}em`;
+        this.date.current.style.fontSize = `${Number(
+          (localStorage.getItem('zoomDate') || 100) / 100,
+        )}em`;
         this.getDate();
       }
     });
 
-    this.date.current.style.fontSize = `${Number((localStorage.getItem('zoomDate') || 100) / 100)}em`;
+    this.date.current.style.fontSize = `${Number(
+      (localStorage.getItem('zoomDate') || 100) / 100,
+    )}em`;
     this.getDate();
   }
 
@@ -132,9 +164,9 @@ export default class DateWidget extends PureComponent {
 
   render() {
     return (
-      <span className='date' ref={this.date}>
+      <span className="date" ref={this.date}>
         {this.state.date}
-        <br/> 
+        <br />
         {this.state.weekNumber}
       </span>
     );

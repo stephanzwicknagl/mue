@@ -1,4 +1,3 @@
-// todo: add more
 export default function ExperimentalInit() {
   if (localStorage.getItem('debug') === 'true') {
     document.onkeydown = (e) => {
@@ -22,7 +21,8 @@ export default function ExperimentalInit() {
             debugger;
           }
           break;
-        default: break;
+        default:
+          break;
       }
     };
   }

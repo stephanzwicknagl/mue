@@ -1,14 +1,19 @@
 import EventBus from './eventbus';
 
 function showReminder() {
-  document.querySelector('.reminder-info').style.display = 'block';
+  document.querySelector('.reminder-info').style.display = 'flex';
   localStorage.setItem('showReminder', true);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // based on https://stackoverflow.com/questions/37684/how-to-replace-plain-urls-with-links
 export function urlParser(input) {
-  const urlPattern = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_+.~#?&//=]*)/;
-  return input.replace(urlPattern, '<a href="$&" target="_blank">$&</a>');
+  const urlPattern =
+    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_+.~#?&//=]*)/;
+  return input.replace(urlPattern, '<br/><a class="link" href="$&" target="_blank">$&</a>');
 }
 
 export function install(type, input, sideload) {
@@ -20,7 +25,7 @@ export function install(type, input, sideload) {
       Object.keys(localStorage).forEach((key) => {
         oldSettings.push({
           name: key,
-          value: localStorage.getItem(key)
+          value: localStorage.getItem(key),
         });
       });
 
@@ -32,21 +37,36 @@ export function install(type, input, sideload) {
       break;
 
     case 'photos':
-      localStorage.setItem('photo_packs', JSON.stringify(input.photos));
-      localStorage.setItem('oldBackgroundType', localStorage.getItem('backgroundType'));
+      const currentPhotos = JSON.parse(localStorage.getItem('photo_packs')) || [];
+      input.photos.forEach((photo) => {
+        currentPhotos.push(photo);
+      });
+      localStorage.setItem('photo_packs', JSON.stringify(currentPhotos));
+
+      if (localStorage.getItem('backgroundType') !== 'photo_pack') {
+        localStorage.setItem('oldBackgroundType', localStorage.getItem('backgroundType'));
+      }
       localStorage.setItem('backgroundType', 'photo_pack');
-      EventBus.dispatch('refresh', 'background');
+      localStorage.removeItem('backgroundchange');
+      EventBus.emit('refresh', 'background');
+      // TODO: make this legitimately good and work without a reload - currently we just refresh
+      sleep(4000);
+      window.location.reload();
       break;
 
     case 'quotes':
-      if (input.quote_api) {
-        localStorage.setItem('quoteAPI', JSON.stringify(input.quote_api));
-      }
+      const currentQuotes = JSON.parse(localStorage.getItem('quote_packs')) || [];
+      input.quotes.forEach((quote) => {
+        currentQuotes.push(quote);
+      });
+      localStorage.setItem('quote_packs', JSON.stringify(currentQuotes));
 
-      localStorage.setItem('quote_packs', JSON.stringify(input.quotes));
-      localStorage.setItem('oldQuoteType', localStorage.getItem('quoteType'));
+      if (localStorage.getItem('quoteType') !== 'quote_pack') {
+        localStorage.setItem('oldQuoteType', localStorage.getItem('quoteType'));
+      }
       localStorage.setItem('quoteType', 'quote_pack');
-      EventBus.dispatch('refresh', 'quote');
+      localStorage.removeItem('quotechange');
+      EventBus.emit('refresh', 'quote');
       break;
 
     default:
@@ -59,8 +79,8 @@ export function install(type, input, sideload) {
     installed.push({
       content: {
         updated: 'Unpublished',
-        data: input
-      }
+        data: input,
+      },
     });
   } else {
     installed.push(input);
@@ -70,6 +90,7 @@ export function install(type, input, sideload) {
 }
 
 export function uninstall(type, name) {
+  let installedContents, packContents;
   switch (type) {
     case 'settings':
       const oldSettings = JSON.parse(localStorage.getItem('backup_settings'));
@@ -81,18 +102,47 @@ export function uninstall(type, name) {
       break;
 
     case 'quotes':
-      localStorage.removeItem('quote_packs');
-      localStorage.removeItem('quoteAPI');
-      localStorage.setItem('quoteType', localStorage.getItem('oldQuoteType'));
-      localStorage.removeItem('oldQuoteType');
-      EventBus.dispatch('refresh', 'marketplacequoteuninstall');
+      installedContents = JSON.parse(localStorage.getItem('quote_packs'));
+      packContents = JSON.parse(localStorage.getItem('installed')).find(
+        (content) => content.name === name,
+      );
+      installedContents.forEach((item, index) => {
+        const exists = packContents.quotes.find(
+          (content) => content.quote === item.quote || content.author === item.author,
+        );
+        if (exists !== undefined) {
+          installedContents.splice(index, 1);
+        }
+      });
+      localStorage.setItem('quote_packs', JSON.stringify(installedContents));
+      if (installedContents.length === 0) {
+        localStorage.setItem('quoteType', localStorage.getItem('oldQuoteType') || 'api');
+        localStorage.removeItem('oldQuoteType');
+        localStorage.removeItem('quote_packs');
+      }
+      localStorage.removeItem('quotechange');
+      EventBus.emit('refresh', 'marketplacequoteuninstall');
       break;
 
     case 'photos':
-      localStorage.removeItem('photo_packs');
-      localStorage.setItem('backgroundType', localStorage.getItem('oldBackgroundType'));
-      localStorage.removeItem('oldBackgroundType');
-      EventBus.dispatch('refresh', 'marketplacebackgrounduninstall');
+      installedContents = JSON.parse(localStorage.getItem('photo_packs'));
+      packContents = JSON.parse(localStorage.getItem('installed')).find(
+        (content) => content.name === name,
+      );
+      installedContents.forEach((item, index) => {
+        const exists = packContents.photos.find((content) => content.photo === item.photo);
+        if (exists !== undefined) {
+          installedContents.splice(index, 1);
+        }
+      });
+      localStorage.setItem('photo_packs', JSON.stringify(installedContents));
+      if (installedContents.length === 0) {
+        localStorage.setItem('backgroundType', localStorage.getItem('oldBackgroundType') || 'api');
+        localStorage.removeItem('oldBackgroundType');
+        localStorage.removeItem('photo_packs');
+      }
+      localStorage.removeItem('backgroundchange');
+      EventBus.emit('refresh', 'marketplacebackgrounduninstall');
       break;
 
     default:
@@ -108,4 +158,4 @@ export function uninstall(type, name) {
   }
 
   localStorage.setItem('installed', JSON.stringify(installed));
-};
+}
